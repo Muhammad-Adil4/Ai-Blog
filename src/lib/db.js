@@ -1,3 +1,4 @@
+// src/lib/db.js
 import mongoose from "mongoose";
 
 const MONGO_URI = process.env.MONGO_URI;
@@ -13,10 +14,21 @@ async function dbConnect() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGO_URI).then((mongoose) => mongoose);
+    const opts = {
+      bufferCommands: false,       
+      connectTimeoutMS: 10000,     
+      socketTimeoutMS: 45000,      
+    };
+    cached.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => mongoose);
   }
 
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (err) {
+    cached.promise = null; // Reset promise on failure
+    throw err;
+  }
+
   return cached.conn;
 }
 
