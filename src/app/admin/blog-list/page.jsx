@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import BlogTableItems from "@/components/Admin/BlogTableItems";
+import BlogTableItems from "@/components/admin/BlogTableItems";
 import { blog_data } from "../../../../public/assets/assets";
 
 const ListBlogsPage = () => {
