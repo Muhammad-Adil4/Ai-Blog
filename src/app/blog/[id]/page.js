@@ -3,144 +3,170 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { assets, blog_data } from "../../../../public/assets/assets";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { getAllBlogs } from "@/services/frontend/blogApi";
+import toast from "react-hot-toast";
+import ReactMarkdown from "react-markdown";
+import { Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// 🧩 Comment Card
+// Comment Card Component
 const CommentCard = ({ name, message, createdAt }) => (
-  <div className="bg-white border border-gray-200 shadow-sm rounded-lg p-4 relative">
-    <div className="flex items-center gap-2 mb-2">
-      <Image
-        src={assets.user_icon}
-        alt="user"
-        width={28}
-        height={28}
-        className="w-7 h-7 rounded-full"
-      />
-      <p className="font-medium text-gray-800">{name}</p>
-      <span className="text-xs text-gray-400 ml-auto">
-        {new Date(createdAt).toLocaleDateString()}
-      </span>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.3 }}
+    className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+  >
+    <div className="flex items-center gap-3 mb-3">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+        {name?.[0]?.toUpperCase() || "U"}
+      </div>
+      <div>
+        <p className="font-semibold text-gray-800">{name}</p>
+        <p className="text-xs text-gray-500">
+          {new Date(createdAt).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+        </p>
+      </div>
     </div>
-    <p className="text-gray-600 ml-9">{message}</p>
-  </div>
+    <p className="text-gray-600 leading-relaxed">{message}</p>
+  </motion.div>
 );
 
 export default function BlogPage() {
   const { id } = useParams();
-  const [data, setData] = useState(null);
+  const [blogData, setBlogData] = useState(null);
   const [comments, setComments] = useState([]);
   const [formData, setFormData] = useState({
-    blogId: id,
     name: "",
     email: "",
     message: "",
   });
+  const [loading, setLoading] = useState(true);
 
-  // handle input change
+  // Fetch blog data
+  useEffect(() => {
+    const fetchBlog = async () => {
+      setLoading(true);
+      try {
+        const response = await getAllBlogs();
+        if (response.success) {
+          const blog = response.blogs.find((b) => b._id === id);
+          if (blog) {
+            setBlogData(blog);
+          } else {
+            toast.error("Blog not found");
+          }
+        } else {
+          toast.error(response.message);
+        }
+      } catch (error) {
+        toast.error(error?.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlog();
+  }, [id]);
+
   const handleForm = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // submit form
   const submitForm = (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.message.trim()) return;
+    if (!formData.name.trim() || !formData.message.trim()) {
+      toast.error("Name and comment are required");
+      return;
+    }
 
     setComments((prev) => [
       ...prev,
       { ...formData, createdAt: new Date().toISOString() },
     ]);
-
-    setFormData({
-      blogId: id,
-      name: "",
-      email: "",
-      message: "",
-    });
+    toast.success("Comment added successfully!");
+    setFormData({ name: "", email: "", message: "" });
   };
 
-  // fake blog data fetch
-  useEffect(() => {
-    setData(blog_data.find((item) => item._id === id) || null);
-  }, [id]);
-
-  if (!data) {
+  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <p className="text-gray-500 text-lg">Blog not found 😢</p>
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <Loader2 className="animate-spin text-indigo-600 w-12 h-12" />
+      </div>
+    );
+  }
+
+  if (!blogData) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <p className="text-gray-600 text-xl font-medium">Blog not found 😢</p>
       </div>
     );
   }
 
   return (
-    <>
+    <div className="bg-gray-50 min-h-screen mt-20">
       <Navbar />
 
-      <div className="relative">
-        {/* Background */}
-        <Image
-          src={assets.gradientBackground}
-          alt="background"
-          fill
-          priority
-          className="absolute top-0 left-0 w-full h-full -z-10 opacity-30 object-cover"
-        />
-
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+      >
         {/* Blog Header */}
-        <div className="text-center mt-20 sm:mt-28 text-gray-700 px-4">
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mt-2 max-w-4xl mx-auto">
-            {data.title}
+        <div className="text-center mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+            {blogData.title}
           </h1>
-          <p className="mt-2 text-sm sm:text-base text-gray-500">
-            {data.subTitle}
+          {blogData.category && (
+            <p className="mt-3 text-sm sm:text-base text-gray-500 uppercase tracking-wide">
+              {blogData.category}
+            </p>
+          )}
+          <p className="mt-2 text-sm text-gray-400">
+            Published on{" "}
+            {new Date(blogData.createdAt).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
           </p>
         </div>
 
-        {/* Blog Content */}
-        <div className="mx-auto max-w-5xl mt-8 sm:mt-12 px-4 sm:px-6">
-          {/* Image */}
-          <div className="flex justify-center mb-6 sm:mb-10">
+        {/* Blog Main Image */}
+        {blogData.image && (
+          <div className="mb-12">
             <Image
-              src={data.image}
-              alt={data.title}
+              src={blogData.image}
+              alt={blogData.title}
               width={1200}
-              height={500}
+              height={600}
               loading="lazy"
-              className="rounded-xl sm:rounded-3xl object-cover w-full max-w-4xl max-h-[350px] sm:max-h-[500px]"
+              className="rounded-2xl object-cover w-full max-h-[600px] shadow-lg"
             />
           </div>
+        )}
 
-          {/* Description */}
-          <div className="max-w-4xl mx-auto">
-  <article
-    className="
-      prose prose-sm sm:prose lg:prose-lg xl:prose-xl
-      prose-headings:text-gray-900 
-      prose-h1:text-3xl sm:prose-h1:text-4xl
-      prose-h2:text-2xl 
-      prose-p:text-gray-700 prose-p:leading-relaxed
-      prose-img:rounded-xl
-      prose-a:text-[#5044E5] prose-a:underline-offset-4 hover:prose-a:text-[#3f3acb]
-      prose-blockquote:border-l-[#5044E5] prose-blockquote:pl-4 prose-blockquote:text-gray-600 prose-blockquote:italic
-    "
-    dangerouslySetInnerHTML={{ __html: data.description }}
-  />
-</div>
+        {/* Blog Content */}
+        <div className="prose prose-lg max-w-none text-gray-700 mb-16">
+          <ReactMarkdown>{blogData.content}</ReactMarkdown>
+        </div>
 
-
-          {/* Comments Section */}
-          <div className="mt-16 sm:mt-20 max-w-3xl mx-auto">
-            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-gray-800">
-              Comments ({comments.length})
-            </h2>
-
-            <div className="space-y-5">
+        {/* Comments Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+            Comments ({comments.length})
+          </h2>
+          <AnimatePresence>
+            <div className="space-y-6">
               {comments
                 .slice()
                 .reverse()
@@ -148,85 +174,54 @@ export default function BlogPage() {
                   <CommentCard key={index} {...item} />
                 ))}
             </div>
-          </div>
+          </AnimatePresence>
+        </div>
 
-          {/* Add Comment Form */}
-          <div className="mt-10 sm:mt-14 max-w-3xl mx-auto">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-4">
-              Add Your Comment
-            </h2>
-            <form onSubmit={submitForm} className="space-y-4">
+        {/* Add Comment Form */}
+        <div className="mt-12 bg-white p-6 rounded-lg shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            Leave a Comment
+          </h2>
+          <form onSubmit={submitForm} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <input
                 name="name"
                 value={formData.name}
                 onChange={handleForm}
                 type="text"
-                placeholder="Name"
+                placeholder="Your Name"
                 required
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded outline-none focus:border-[#5044E5]"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
               />
               <input
                 name="email"
                 value={formData.email}
                 onChange={handleForm}
                 type="email"
-                placeholder="Email"
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded outline-none focus:border-[#5044E5]"
-              />
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleForm}
-                placeholder="Your comment..."
-                rows={4}
-                required
-                className="w-full border border-gray-300 p-2 sm:p-3 rounded outline-none focus:border-[#5044E5]"
-              />
-              <button
-                type="submit"
-                className="bg-[#5044E5] text-white px-4 sm:px-5 py-2 rounded hover:bg-[#3f3acb] transition w-full sm:w-auto"
-              >
-                Submit
-              </button>
-            </form>
-          </div>
-
-          {/* Social Sharing */}
-          <div className="my-14 sm:my-20 max-w-3xl mx-auto text-center">
-            <p className="font-semibold mb-4 text-gray-800">
-              Share this article
-            </p>
-            <div className="flex justify-center gap-4 sm:gap-6">
-              <Image
-                src={assets.facebook_icon}
-                alt="fb"
-                width={35}
-                height={35}
-                className="sm:w-10 sm:h-10"
-                loading="lazy"
-              />
-              <Image
-                src={assets.twitter_icon}
-                alt="tw"
-                width={35}
-                height={35}
-                className="sm:w-10 sm:h-10"
-                loading="lazy"
-              />
-              <Image
-                src={assets.googleplus_icon}
-                alt="g+"
-                width={35}
-                height={35}
-                className="sm:w-10 sm:h-10"
-                loading="lazy"
+                placeholder="Your Email (optional)"
+                className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
               />
             </div>
-          </div>
+            <textarea
+              name="message"
+              value={formData.message}
+              onChange={handleForm}
+              placeholder="Your comment..."
+              rows={5}
+              required
+              className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+            />
+            <button
+              type="submit"
+              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition w-full sm:w-auto"
+            >
+              Post Comment
+            </button>
+          </form>
         </div>
-      </div>
+      </motion.div>
 
       <Footer />
-    </>
+    </div>
   );
 }

@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["via.placeholder.com"], // yahan allowed hostnames likho
+    domains: [
+      "via.placeholder.com",   // existing
+      "res.cloudinary.com",    // Cloudinary images ke liye add kiya
+    ],
   },
 };
 

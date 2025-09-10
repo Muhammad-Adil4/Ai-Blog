@@ -1,71 +1,180 @@
+
 "use client";
+
+import { useEffect, useState } from "react";
 import { Star } from "lucide-react";
-import { useState } from "react";
-import { blog_data } from "../../public/assets/assets";
+import { motion, AnimatePresence } from "framer-motion";
 import BlogCard from "./BlogCard";
-let Blogcatgegory = ["All", "Technology", "Startup", "Lifestyle", "Finance"];
+import { getAllBlogs } from "@/services/frontend/blogApi";
+import toast from "react-hot-toast";
+import { Loader2 } from "lucide-react";
+
+const BlogCategory = ["All", "Technology", "Startup", "Lifestyle", "Finance"];
+
 const Hero = () => {
-  const [menu, setmenu] = useState("All");
+  const [blogData, setBlogData] = useState([]);
+  const [menu, setMenu] = useState("All");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      setLoading(true);
+      try {
+        const response = await getAllBlogs();
+        if (response.success) {
+          toast.success(response.message);
+          setBlogData(response.blogs || []);
+          console.log("Fetched blogs:", response.blogs); // Debug: Log fetched data
+        } else {
+          toast.error(response.message);
+        }
+      } catch (error) {
+        toast.error(error?.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlogs();
+  }, []);
+
+  // Combined filtering: category + search
+  const filteredBlogs = blogData
+    .filter((blog) => (menu === "All" ? true : blog.category === menu))
+    .filter((blog) => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return (
+        (blog.title && blog.title.toLowerCase().includes(q)) ||
+        (blog.description && blog.description.toLowerCase().includes(q)) ||
+        (blog.content && blog.content.toLowerCase().includes(q))
+      );
+    });
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <Loader2 className="animate-spin text-indigo-600 w-12 h-12" />
+      </div>
+    );
+  }
+
   return (
-    <div className="text-center flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 lg:px-12 mt-10 sm:mt-16 md:mt-20 lg:mt-30 min-h-[60vh] ">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 lg:pt-32 pb-12 min-h-screen bg-gray-50"
+    >
       {/* Badge */}
-      <h1 className="flex items-center bg-[#5044E5]/20  px-3 sm:px-4 md:px-5 text-[#5044E5] py-1 rounded-full gap-1 sm:gap-2 text-xs sm:text-sm md:text-base">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+        className="flex items-center bg-indigo-100 px-4 py-1.5 rounded-full gap-2 text-sm text-indigo-600"
+      >
         New: AI feature integrated
-        <Star className="h-4 w-4 sm:h-5 sm:w-5 md:h-[18px] md:w-[18px]" />
-      </h1>
+        <Star className="h-4 w-4" />
+      </motion.div>
 
       {/* Main Heading */}
-      <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-slate-600 mt-4 sm:mt-6 md:mt-8">
-        Your own <span className="text-[#5044E5]">blogging</span>
-        <br />
-        platform.
-      </h1>
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+        className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mt-6"
+      >
+        Your <span className="text-indigo-600">Blogging</span> Platform
+      </motion.h1>
 
       {/* Description */}
-      <p className="mt-3 sm:mt-4 md:mt-5 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl text-slate-500 text-sm sm:text-base md:text-lg lg:text-xl">
-        This is your space to think out loud, to share what matters, and to
-        write without filters. Whether it’s one word or a thousand, your story
-        starts right here.
-      </p>
+      <motion.p
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.4 }}
+        className="mt-4 max-w-2xl text-gray-600 text-base sm:text-lg md:text-xl"
+      >
+        Share your thoughts, stories, and ideas with the world. Your voice matters, and it starts here.
+      </motion.p>
 
       {/* Search Bar */}
-      <div className="flex w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mt-4 sm:mt-5 md:mt-6 border border-gray-400 rounded-lg overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.5 }}
+        className="flex w-full max-w-md mt-6 border border-gray-300 rounded-lg overflow-hidden shadow-sm"
+      >
         <input
           type="text"
-          placeholder="Search blogs"
-          className="flex-1 px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base outline-none focus:ring-2 focus:ring-[#5044E5]/50"
-          aria-label="Search blogs"
+          placeholder="Search blogs..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1 px-4 py-2.5 text-sm sm:text-base outline-none focus:ring-2 focus:ring-indigo-500"
         />
         <button
-          className="bg-[#5044E5] text-white px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base font-medium hover:bg-[#4037b8] transition-colors"
-          aria-label="Search"
+          onClick={() => toast.success("Search triggered!")}
+          className="bg-indigo-600 text-white px-6 py-2.5 text-sm sm:text-base font-medium hover:bg-indigo-700 transition"
         >
           Search
         </button>
-      </div>
-      <div className="flex flex-wrap justify-center gap-2 sm:gap-5 my-10 relative">
-        {Blogcatgegory.map((items, index) => (
-          <button
+      </motion.div>
+
+      {/* Category Filter */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.6 }}
+        className="flex flex-wrap justify-center gap-3 my-10"
+      >
+        {BlogCategory.map((item, index) => (
+          <motion.button
             key={index}
-            onClick={() => setmenu(items)}
-            className={`rounded-xl p-2 text-xs transition-colors duration-300 ${
-              menu === items
-                ? "bg-[#5044E5] text-white" // Active color + text
-                : "bg-[#5044E5]/20  text-gray-800 hover:bg-[#5044E5]/50 " // Inactive color + text + hover
+            onClick={() => setMenu(item)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              menu === item
+                ? "bg-indigo-600 text-white"
+                : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
             }`}
           >
-            {items}
-          </button>
+            {item}
+          </motion.button>
         ))}
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 mb-24 mx-8 sm:mx-16 xl:mx-10">
-        {blog_data
-          .filter((blog) => (menu === "All" ? true : blog.category === menu))
-          .map((blog, index) => (
-            <BlogCard key={index} blog={blog} />
-          ))}
-      </div>
-    </div>
+      </motion.div>
+
+      {/* Blog Grid */}
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto w-full"
+        >
+          {filteredBlogs.length === 0 ? (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="col-span-full text-center text-gray-600 text-lg"
+            >
+              No blogs found.
+            </motion.p>
+          ) : (
+            filteredBlogs.map((blog, index) => (
+              <motion.div
+                key={blog._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 * index }}
+                className="h-full"
+              >
+                <BlogCard blog={blog} />
+              </motion.div>
+            ))
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

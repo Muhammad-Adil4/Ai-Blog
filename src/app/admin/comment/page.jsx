@@ -1,16 +1,21 @@
+
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { comments_data } from "../../../../public/assets/assets";
 import CommentsTable from "@/components/admin/CommentsTable";
 import { CheckCircle2, XCircle, List } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CommentsPage = () => {
   const [comments, setComments] = useState([]);
   const [filter, setFilter] = useState("Not Approved");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Replace with actual API call when available
     setComments(comments_data);
+    setLoading(false);
   }, []);
 
   const toggleCommentHandler = (id) => {
@@ -33,79 +38,102 @@ const CommentsPage = () => {
     return true;
   });
 
+  if (loading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="flex justify-center items-center min-h-screen bg-gray-50"
+      >
+        <svg className="animate-spin h-12 w-12 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+      </motion.div>
+    );
+  }
+
   return (
-    <div className="flex-1 pt-5 px-3 sm:px-5 sm:pt-12 sm:pl-16 bg-blue-50/50">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="flex-1 p-4 sm:p-6 lg:p-10 bg-gray-50"
+    >
       {/* Header + Filters */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 max-w-3xl">
-        <h1 className="text-xl sm:text-2xl font-semibold">All Comments</h1>
-        <div className="flex gap-2 sm:gap-3">
-          <button
-            onClick={() => setFilter(true)}
-            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-sm shadow ${
-              filter === true
-                ? "bg-green-100 text-green-700 border border-green-300"
-                : "bg-white text-gray-600"
-            }`}
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            Approved
-          </button>
-          <button
-            onClick={() => setFilter(false)}
-            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-sm shadow ${
-              filter === false
-                ? "bg-orange-100 text-orange-600 border border-orange-300"
-                : "bg-white text-gray-600"
-            }`}
-          >
-            <XCircle className="w-4 h-4" />
-            Not Approved
-          </button>
-          <button
-            onClick={() => setFilter(null)}
-            className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs sm:text-sm shadow ${
-              filter === null
-                ? "bg-blue-100 text-blue-700 border border-blue-300"
-                : "bg-white text-gray-600"
-            }`}
-          >
-            <List className="w-4 h-4" />
-            All
-          </button>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 max-w-4xl"
+      >
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">All Comments</h1>
+        <div className="flex gap-3">
+          {[
+            { label: "Approved", value: true, icon: CheckCircle2, color: "green" },
+            { label: "Not Approved", value: false, icon: XCircle, color: "orange" },
+            { label: "All", value: null, icon: List, color: "blue" },
+          ].map((item, index) => (
+            <motion.button
+              key={index}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setFilter(item.value)}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
+                filter === item.value
+                  ? `bg-${item.color}-100 text-${item.color}-700 border border-${item.color}-300`
+                  : "bg-white text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </motion.button>
+          ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Table */}
-      <div className="relative max-w-4xl overflow-x-auto overflow-y-auto shadow rounded-lg bg-white mt-5 max-h-[500px]">
-        <table className="w-full text-gray-600 text-xs sm:text-sm">
-          <thead className="text-xs sm:text-sm text-gray-700 text-left uppercase sticky top-0 bg-white z-10 border-b">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="relative max-w-4xl overflow-x-auto shadow rounded-lg bg-white mt-5 max-h-[500px]"
+      >
+        <table className="w-full text-sm text-gray-600">
+          <thead className="text-sm text-gray-700 uppercase bg-gray-50 sticky top-0 z-10 border-b">
             <tr>
-              <th scope="col" className="px-3 sm:px-6 py-3 sm:py-4">Blog Details</th>
-              <th scope="col" className="px-3 sm:px-6 py-3 sm:py-4 max-sm:hidden">Date</th>
-              <th scope="col" className="px-3 sm:px-6 py-3 sm:py-4">Actions</th>
+              <th scope="col" className="px-6 py-4">Blog Details</th>
+              <th scope="col" className="px-6 py-4 max-sm:hidden">Date</th>
+              <th scope="col" className="px-6 py-4">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredComments.length > 0 ? (
-              filteredComments.map((comment, index) => (
-                <CommentsTable
-                  key={comment._id || index}
-                  comment={comment}
-                  toggleCommentHandler={toggleCommentHandler}
-                  deleteCommentHandler={deleteCommentHandler}
-                />
-              ))
-            ) : (
-              <tr>
-                <td colSpan="3" className="text-center py-6 text-gray-500">
-                  No comments found.
-                </td>
-              </tr>
-            )}
+            <AnimatePresence>
+              {filteredComments.length > 0 ? (
+                filteredComments.map((comment, index) => (
+                  <CommentsTable
+                    key={comment._id || index}
+                    comment={comment}
+                    toggleCommentHandler={toggleCommentHandler}
+                    deleteCommentHandler={deleteCommentHandler}
+                  />
+                ))
+              ) : (
+                <motion.tr
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center"
+                >
+                  <td colSpan="3" className="py-6 text-gray-500">
+                    No comments found.
+                  </td>
+                </motion.tr>
+              )}
+            </AnimatePresence>
           </tbody>
         </table>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
