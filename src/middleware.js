@@ -6,11 +6,17 @@ export default function middleware(req) {
   const { pathname } = req.nextUrl;
   const token = req.cookies.get("token")?.value;
 
-  if (pathname === "/admin/login" || pathname === "/admin/signup") {
-    console.log(" Skipping middleware for login/signup");
+  // Skip middleware for login/signup and public blogs API
+  if (
+    pathname === "/admin/login" ||
+    pathname === "/admin/signup" ||
+    pathname === "/api/blogs"
+  ) {
+    console.log("Skipping middleware for login/signup or public blogs API");
     return NextResponse.next();
   }
 
+  // Protect other admin routes
   if (!token) {
     console.log("No token found, redirecting to /admin/login");
     return NextResponse.redirect(new URL("/admin/login", req.url));
@@ -29,5 +35,5 @@ export default function middleware(req) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/blogs/:path*"],
+  matcher: ["/admin/:path*"], // only protect admin routes now
 };

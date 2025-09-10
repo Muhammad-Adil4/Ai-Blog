@@ -7,6 +7,8 @@ import Link from "next/link";
 import { adminLogin } from "@/services/frontend/adminApi";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,6 +44,8 @@ export default function LoginPage() {
   };
 
   return (
+   <>
+   <Navbar />
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -131,5 +135,7 @@ export default function LoginPage() {
         </motion.p>
       </div>
     </motion.div>
+    <Footer />
+    </>
   );
 };

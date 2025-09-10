@@ -7,6 +7,8 @@ import Link from "next/link";
 import { adminSignup } from "@/services/frontend/adminApi";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -48,6 +50,8 @@ export default function SignupPage() {
   };
 
   return (
+<>
+<Navbar />
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -171,5 +175,7 @@ export default function SignupPage() {
         </motion.p>
       </div>
     </motion.div>
+    <Footer />
+</>
   );
 };
