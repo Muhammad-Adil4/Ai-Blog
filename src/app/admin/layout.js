@@ -29,12 +29,13 @@ const Layout = ({ children }) => {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // 🔹 Logout
   const handleLogout = async () => {
     try {
       const response = await adminlogout();
       if (response.success) {
         toast.success(response.message);
-        router.push("/admin/login"); // redirect after logout
+        router.push("/admin/login");
       } else {
         toast.error(response.message);
       }
@@ -43,14 +44,18 @@ const Layout = ({ children }) => {
     }
   };
 
+  // 🔹 Agar login/signup page hai → full screen, layout skip
+  if (pathname === "/admin/login" || pathname === "/admin/signup") {
+    return <>{children}</>;
+  }
+
   return (
     <>
-      {/* 🔹 Top Navbar */}
+      {/* Top Navbar */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-200 md:p-2 md:px-5">
         <div className="flex items-center justify-between px-4 sm:px-6 py-3">
-          {/* Left: Logo + Menu */}
           <div className="flex items-center gap-3">
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu */}
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 rounded-md hover:bg-gray-100"
@@ -58,7 +63,6 @@ const Layout = ({ children }) => {
               <Menu className="w-6 h-6 text-gray-700" />
             </button>
 
-            {/* Logo */}
             <Image
               onClick={() => router.push("/")}
               src={assets.logo}
@@ -69,7 +73,6 @@ const Layout = ({ children }) => {
             />
           </div>
 
-          {/* Right: Logout */}
           <button
             onClick={handleLogout}
             className="bg-[#5044E5] hover:bg-[#3e34b3] transition text-white px-4 sm:px-6 py-2 rounded-full text-sm sm:text-base shadow-sm"
@@ -79,9 +82,9 @@ const Layout = ({ children }) => {
         </div>
       </header>
 
-      {/* 🔹 Main Wrapper */}
+      {/* Main Wrapper */}
       <div className="flex min-h-screen bg-gray-50">
-        {/* Sidebar (Desktop) */}
+        {/* Sidebar Desktop */}
         <aside className="hidden lg:block w-64 bg-white border-r border-gray-200 p-4">
           <nav className="space-y-1">
             {adminNav.map((item, index) => {
@@ -105,13 +108,12 @@ const Layout = ({ children }) => {
           </nav>
         </aside>
 
-        {/* Sidebar (Mobile Drawer with Slide Transition) */}
+        {/* Sidebar Mobile */}
         <div
           className={`fixed inset-0 z-50 lg:hidden transition ${
             sidebarOpen ? "visible" : "invisible"
           }`}
         >
-          {/* Overlay */}
           <div
             className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
               sidebarOpen ? "opacity-100" : "opacity-0"
@@ -119,7 +121,6 @@ const Layout = ({ children }) => {
             onClick={() => setSidebarOpen(false)}
           />
 
-          {/* Drawer */}
           <aside
             className={`absolute left-0 top-0 h-full w-64 bg-white shadow-lg p-4 transform transition-transform duration-300 ${
               sidebarOpen ? "translate-x-0" : "-translate-x-full"

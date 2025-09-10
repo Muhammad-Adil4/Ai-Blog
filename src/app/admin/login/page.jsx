@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (response.success) {
         toast.success(response.message);
         setTimeout(() => {
-          router.push("/"); 
+          router.push("/admin/dashboard"); 
         }, 500);
       } else {
         toast.error(response.message || "Login failed");
