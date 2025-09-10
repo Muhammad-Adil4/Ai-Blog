@@ -1,23 +1,20 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { assets, dashboard_data } from "../../../../public/assets/assets";
+import { assets } from "../../../../public/assets/assets";
 import BlogTableItems from "@/components/admin/BlogTableItems";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import { Loader2 } from "lucide-react";
+import { deleteBlog, toggleBlog } from "@/services/frontend/blogApi";
 
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      duration: 0.5,
-      staggerChildren: 0.15,
-      ease: "easeOut",
-    },
+    transition: { duration: 0.5, staggerChildren: 0.15, ease: "easeOut" },
   },
 };
 
@@ -27,20 +24,12 @@ const statsCardVariants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      type: "spring",
-      stiffness: 120,
-      damping: 15,
-      duration: 0.5,
-    },
+    transition: { type: "spring", stiffness: 120, damping: 15, duration: 0.5 },
   },
   hover: {
     scale: 1.05,
     boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.12)",
-    transition: {
-      duration: 0.3,
-      ease: "easeOut",
-    },
+    transition: { duration: 0.3, ease: "easeOut" },
   },
 };
 
@@ -49,11 +38,7 @@ const tableVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: {
-      duration: 0.6,
-      ease: "easeOut",
-      staggerChildren: 0.1,
-    },
+    transition: { duration: 0.6, ease: "easeOut", staggerChildren: 0.1 },
   },
 };
 
@@ -69,40 +54,95 @@ const DashboardPage = () => {
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      console.log("Fetching dashboard data:", dashboard_data); // Debug log
-      if (!dashboard_data || !dashboard_data.recentBlogs || !Array.isArray(dashboard_data.recentBlogs)) {
-        throw new Error("Invalid or missing recentBlogs data");
-      }
-      // Validate each blog object
-      const validBlogs = dashboard_data.recentBlogs.filter(
-        (blog) => blog && blog._id && blog.title && blog.createdAt
-      );
-      if (validBlogs.length === 0) {
-        throw new Error("No valid blog data found");
-      }
-      setDashboardData({ ...dashboard_data, recentBlogs: validBlogs });
-    } catch (error) {
-      console.error("Dashboard fetch error:", error);
-      toast.error("Failed to load dashboard data");
-      // Fallback data to ensure table renders
-      setDashboardData({
-        blogs: 0,
-        comments: 0,
-        drafts: 0,
-        recentBlogs: [
-         
-        ],
+      const res = await fetch("/api/admin/dashboard", {
+        method: "GET",
+        cache: "no-store",
       });
+      const response = await res.json();
+
+      if (response.success) {
+        toast.success(response.message);
+        setDashboardData(response.data);
+      } else {
+        toast.error(response.message || "Failed to load dashboard data");
+      }
+    } catch (error) {
+      toast.error(error?.message || "Error loading dashboard");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDeleteBlog = async (id) => {
+    try {
+      const response = await deleteBlog(id);
+      if (response.success) {
+        toast.success(response.message);
+
+        setDashboardData((prev) => {
+    
+          const deletedBlog = prev.recentBlogs.find((b) => b._id === id);
+
+          return {
+            ...prev,
+            recentBlogs: prev.recentBlogs.filter((b) => b._id !== id),
+            blogs: prev.blogs - 1, 
+            drafts:
+              deletedBlog && !deletedBlog.isPublished
+                ? prev.drafts - 1
+                : prev.drafts, 
+          };
+        });
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error(error?.message || "Error while deleting blog");
+    }
+  };
+
+  const handleToggleBlog = async (id) => {
+  try {
+    const response = await toggleBlog(id);
+    if (response.success) {
+      toast.success(response.message);
+
+      setDashboardData((prev) => {
+        // Toggle the blog
+        const updatedBlogs = prev.recentBlogs.map((b) =>
+          b._id === id ? { ...b, isPublished: !b.isPublished } : b
+        );
+
+        // Count drafts (blogs where isPublished is false)
+        const updatedDrafts = updatedBlogs.filter((b) => !b.isPublished).length;
+
+        return {
+          ...prev,
+          recentBlogs: updatedBlogs,
+          drafts: updatedDrafts,
+        };
+      });
+    } else {
+      toast.error(response.message);
+    }
+  } catch (error) {
+    toast.error(error?.message || "Error while toggling blog");
+  }
+};
+
+
   useEffect(() => {
     fetchDashboard();
-    // Debug log after setting data
-    console.log("Dashboard data set:", dashboardData);
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] gap-3 text-gray-600">
+        <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+        <p className="text-sm font-medium">Loading dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -114,9 +154,21 @@ const DashboardPage = () => {
       {/* Stats Cards */}
       <motion.div variants={containerVariants} className="flex flex-wrap gap-4">
         {[
-          { icon: assets.dashboard_icon_1, value: dashboardData.blogs, label: "Blogs" },
-          { icon: assets.dashboard_icon_2, value: dashboardData.comments, label: "Comments" },
-          { icon: assets.dashboard_icon_3, value: dashboardData.drafts, label: "Drafts" },
+          {
+            icon: assets.dashboard_icon_1,
+            value: dashboardData.blogs,
+            label: "Blogs",
+          },
+          {
+            icon: assets.dashboard_icon_2,
+            value: dashboardData.comments,
+            label: "Comments",
+          },
+          {
+            icon: assets.dashboard_icon_3,
+            value: dashboardData.drafts,
+            label: "Drafts",
+          },
         ].map((item, index) => (
           <motion.div
             key={index}
@@ -127,7 +179,11 @@ const DashboardPage = () => {
             <motion.div
               initial={{ scale: 0, rotate: -10 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ delay: 0.2 + index * 0.1, type: "spring", stiffness: 150 }}
+              transition={{
+                delay: 0.2 + index * 0.1,
+                type: "spring",
+                stiffness: 150,
+              }}
             >
               <Image src={item.icon} alt={item.label} width={40} height={40} />
             </motion.div>
@@ -161,9 +217,15 @@ const DashboardPage = () => {
           transition={{ delay: 0.5, duration: 0.4, ease: "easeOut" }}
           className="flex items-center gap-3 text-gray-900"
         >
-          <Image src={assets.dashboard_icon_4} alt="Latest" width={24} height={24} />
+          <Image
+            src={assets.dashboard_icon_4}
+            alt="Latest"
+            width={24}
+            height={24}
+          />
           <p className="text-lg font-semibold">Latest Blogs</p>
         </motion.div>
+
         <motion.div
           variants={tableVariants}
           className="relative max-w-4xl overflow-x-auto shadow rounded-lg bg-white mt-4"
@@ -171,11 +233,11 @@ const DashboardPage = () => {
           <table className="w-full text-sm text-gray-600">
             <thead className="text-sm text-gray-700 uppercase bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-4">#</th>
-                <th scope="col" className="px-6 py-4">Blogs Title</th>
-                <th scope="col" className="px-6 py-4 max-sm:hidden">Date</th>
-                <th scope="col" className="px-6 py-4 max-sm:hidden">Status</th>
-                <th scope="col" className="px-6 py-4">Actions</th>
+                <th className="px-6 py-4">#</th>
+                <th className="px-6 py-4">Blogs Title</th>
+                <th className="px-6 py-4 max-sm:hidden">Date</th>
+                <th className="px-6 py-4 max-sm:hidden">Status</th>
+                <th className="px-6 py-4">Actions</th>
               </tr>
             </thead>
             <motion.tbody variants={tableVariants}>
@@ -186,6 +248,8 @@ const DashboardPage = () => {
                       key={blog._id || `blog-${index}`}
                       blogs={blog}
                       index={index + 1}
+                      handleDeleteBlog={handleDeleteBlog}
+                      handleToggleBlog={handleToggleBlog}
                     />
                   ))
                 ) : (

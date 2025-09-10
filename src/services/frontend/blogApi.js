@@ -17,12 +17,18 @@ export const createBlog = async (data) => {
 };
 
 export const deleteBlog = async (id) => {
-  const res = await api.delete(`/blogs`,id);
+  const res = await api.delete("/blogs/delete", {
+    data: { id },  
+  });
+  return res.data;
+};
+export const toggleBlog = async (id) => {
+  const res = await api.patch("/blogs/toggle", { id });
   return res.data;
 };
 
 // AI generated blog fetch
 export const aiblog = async (data) => {
-  const res = await api.post(`/blogs/ai-blog`,data);
+  const res = await api.post(`/blogs/ai-blog`, data);
   return res.data;
 };

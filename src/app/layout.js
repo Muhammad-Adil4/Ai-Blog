@@ -1,6 +1,8 @@
+// src/app/layout.js
 import { Roboto } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "react-hot-toast";
+import ToasterWrapper from "./ToasterWrapper"; // client component
+
 const roboto = Roboto({
   subsets: ["latin"],
   weight: ["400", "700"],
@@ -16,13 +18,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${roboto.variable} antialiased`}>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 3000,
-            style: { background: "#333", color: "#fff", fontSize: "14px" },
-          }}
-        />
+        {/* CLIENT-ONLY COMPONENT */}
+        <ToasterWrapper />
         {children}
       </body>
     </html>

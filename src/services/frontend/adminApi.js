@@ -21,3 +21,7 @@ export const adminlogout = async () => {
   const res = await api.post("/admin/logout");
   return res.data;
 };
+export const fetchDashboard = async () => {
+  const res = await api.post("/admin/dashboard");
+  return res.data;
+};

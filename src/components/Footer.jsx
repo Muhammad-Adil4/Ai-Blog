@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -26,10 +25,12 @@ const Footer = () => {
             alt="logo"
             width={128}
             height={32}
-            className="mb-4"
+            className="mb-4 w-auto h-auto"
           />
+
           <p className="text-sm text-gray-600 leading-relaxed max-w-md">
-            Your blogging platform to share ideas, stories, and insights with the world. Join our community and start writing today.
+            Your blogging platform to share ideas, stories, and insights with
+            the world. Join our community and start writing today.
           </p>
         </motion.div>
 
@@ -42,7 +43,9 @@ const Footer = () => {
             transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
             className="md:col-span-1"
           >
-            <h1 className="text-lg font-semibold text-gray-900 mb-3">{item.title}</h1>
+            <h1 className="text-lg font-semibold text-gray-900 mb-3">
+              {item.title}
+            </h1>
             <ul className="space-y-2">
               {item.links.map((link, i) => (
                 <motion.li

@@ -1,13 +1,11 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
-import { Star } from "lucide-react";
+import { Star, Loader2 as Loader } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import BlogCard from "./BlogCard";
 import { getAllBlogs } from "@/services/frontend/blogApi";
 import toast from "react-hot-toast";
-import { Loader2 } from "lucide-react";
 
 const BlogCategory = ["All", "Technology", "Startup", "Lifestyle", "Finance"];
 
@@ -22,12 +20,11 @@ const Hero = () => {
       setLoading(true);
       try {
         const response = await getAllBlogs();
-        if (response.success) {
-          toast.success(response.message);
+        if (response?.success) {
+          toast.success(response.message || "Blogs loaded");
           setBlogData(response.blogs || []);
-          console.log("Fetched blogs:", response.blogs); // Debug: Log fetched data
         } else {
-          toast.error(response.message);
+          toast.error(response?.message || "Failed to load blogs");
         }
       } catch (error) {
         toast.error(error?.message || "Something went wrong");
@@ -38,7 +35,6 @@ const Hero = () => {
     fetchBlogs();
   }, []);
 
-  // Combined filtering: category + search
   const filteredBlogs = blogData
     .filter((blog) => (menu === "All" ? true : blog.category === menu))
     .filter((blog) => {
@@ -51,20 +47,23 @@ const Hero = () => {
       );
     });
 
+  const topPadding = "pt-16 sm:pt-20 md:pt-24 lg:pt-28";
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <Loader2 className="animate-spin text-indigo-600 w-12 h-12" />
+      <div className={`flex justify-center items-center min-h-screen bg-gray-50 ${topPadding}`}>
+        <Loader className="animate-spin text-indigo-600 w-12 h-12" />
       </div>
     );
   }
 
   return (
-    <motion.div
+    <motion.section
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 lg:pt-32 pb-12 min-h-screen bg-gray-50"
+      className={`${topPadding} flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 py-12 sm:py-16 min-h-screen bg-gray-50`}
+      aria-labelledby="hero-heading"
     >
       {/* Badge */}
       <motion.div
@@ -77,14 +76,15 @@ const Hero = () => {
         <Star className="h-4 w-4" />
       </motion.div>
 
-      {/* Main Heading */}
+      {/* Heading */}
       <motion.h1
+        id="hero-heading"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.3 }}
-        className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mt-6"
+        className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-gray-900 mt-6 text-center leading-tight"
       >
-        Your <span className="text-indigo-600">Blogging</span> Platform
+        Your <span className="text-indigo-600 bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse">Blogging</span> Platform
       </motion.h1>
 
       {/* Description */}
@@ -92,12 +92,12 @@ const Hero = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.4 }}
-        className="mt-4 max-w-2xl text-gray-600 text-base sm:text-lg md:text-xl"
+        className="mt-4 max-w-2xl text-gray-600 text-base sm:text-lg md:text-xl text-center"
       >
-        Share your thoughts, stories, and ideas with the world. Your voice matters, and it starts here.
+        Share your thoughts, ideas, and stories with the world. Your voice matters — start creating today and inspire others.
       </motion.p>
 
-      {/* Search Bar */}
+      {/* Search */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -119,31 +119,30 @@ const Hero = () => {
         </button>
       </motion.div>
 
-      {/* Category Filter */}
+      {/* Categories */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.6 }}
         className="flex flex-wrap justify-center gap-3 my-10"
       >
-        {BlogCategory.map((item, index) => (
+        {BlogCategory.map((item) => (
           <motion.button
-            key={index}
+            key={item}
             onClick={() => setMenu(item)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              menu === item
-                ? "bg-indigo-600 text-white"
-                : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+              menu === item ? "bg-indigo-600 text-white" : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
             }`}
+            aria-pressed={menu === item}
           >
             {item}
           </motion.button>
         ))}
       </motion.div>
 
-      {/* Blog Grid */}
+      {/* Grid */}
       <AnimatePresence>
         <motion.div
           initial={{ opacity: 0 }}
@@ -152,20 +151,16 @@ const Hero = () => {
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto w-full"
         >
           {filteredBlogs.length === 0 ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="col-span-full text-center text-gray-600 text-lg"
-            >
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full text-center text-gray-600 text-lg">
               No blogs found.
             </motion.p>
           ) : (
-            filteredBlogs.map((blog, index) => (
+            filteredBlogs.map((blog, i) => (
               <motion.div
                 key={blog._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 * index }}
+                transition={{ duration: 0.4, delay: 0.06 * i }}
                 className="h-full"
               >
                 <BlogCard blog={blog} />
@@ -174,7 +169,7 @@ const Hero = () => {
           )}
         </motion.div>
       </AnimatePresence>
-    </motion.div>
+    </motion.section>
   );
 };
 

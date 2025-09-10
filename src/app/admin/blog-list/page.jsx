@@ -1,24 +1,64 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
 import BlogTableItems from "@/components/admin/BlogTableItems";
-import { blog_data } from "../../../../public/assets/assets";
 import { motion, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { getAllBlogs, deleteBlog, toggleBlog } from "@/services/frontend/blogApi";
 
 const ListBlogsPage = () => {
   const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ Fetch all blogs
   const fetchBlogs = async () => {
     setLoading(true);
     try {
-      // Replace with actual API call when available
-      setBlogs(blog_data);
+      const res = await getAllBlogs();
+      if (res.success) {
+        setBlogs(res.blogs);
+      } else {
+        toast.error(res.message || "Failed to fetch blogs");
+      }
     } catch (error) {
-      console.error("Blogs fetch error:", error);
+      toast.error(error?.message || "Error while fetching blogs");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ Delete blog
+  const handleDeleteBlog = async (id) => {
+    try {
+      const response = await deleteBlog(id);
+      if (response.success) {
+        toast.success(response.message);
+        setBlogs((prev) => prev.filter((b) => b._id !== id));
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error(error?.message || "Error while deleting blog");
+    }
+  };
+
+  // ✅ Toggle blog publish/draft
+  const handleToggleBlog = async (id) => {
+    try {
+      const response = await toggleBlog(id);
+      if (response.success) {
+        toast.success(response.message);
+        setBlogs((prev) =>
+          prev.map((b) =>
+            b._id === id ? { ...b, isPublished: !b.isPublished } : b
+          )
+        );
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error(error?.message || "Error while toggling blog");
     }
   };
 
@@ -28,16 +68,9 @@ const ListBlogsPage = () => {
 
   if (loading) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex justify-center items-center min-h-screen bg-gray-50"
-      >
-        <svg className="animate-spin h-12 w-12 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-        </svg>
-      </motion.div>
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
+      </div>
     );
   }
 
@@ -76,13 +109,23 @@ const ListBlogsPage = () => {
             </thead>
             <tbody>
               <AnimatePresence>
-                {blogs?.map((blog, index) => (
-                  <BlogTableItems
-                    key={blog._id || index}
-                    blogs={blog}
-                    index={index + 1}
-                  />
-                ))}
+                {blogs?.length > 0 ? (
+                  blogs.map((blog, index) => (
+                    <BlogTableItems
+                      key={blog._id || index}
+                      blogs={blog}
+                      index={index + 1}
+                      handleDeleteBlog={handleDeleteBlog}
+                      handleToggleBlog={handleToggleBlog}
+                    />
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center py-6 text-gray-500">
+                      No blogs found.
+                    </td>
+                  </tr>
+                )}
               </AnimatePresence>
             </tbody>
           </table>
