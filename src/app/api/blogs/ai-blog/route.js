@@ -4,36 +4,29 @@ import GenerateByAi from '@/services/openai';
 
 export async function POST(req) {
   try {
-    const { aiTitle, aiCategory, aiContent } = await req.json();
+    // Destructure incoming data, aiContent optional
+    const { aiTitle, aiCategory, aiContent = "" } = await req.json();
 
-    // Input validation
-    if (
-      !aiTitle || typeof aiTitle !== 'string' || !aiTitle.trim() ||
-      !aiCategory || typeof aiCategory !== 'string' || !aiCategory.trim() ||
-      !aiContent || typeof aiContent !== 'string' || !aiContent.trim()
-    ) {
+    // Validate title and category
+    if (!aiTitle || !aiTitle.trim() || !aiCategory || !aiCategory.trim()) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'aiTitle, aiCategory, and aiContent are required and must be valid strings',
-        },
+        { success: false, message: 'aiTitle and aiCategory are required and must be valid strings' },
         { status: 400 }
       );
     }
 
-    // Trim input
     const title = aiTitle.trim();
     const category = aiCategory.trim();
-    const content = aiContent.trim();
+    const context = aiContent.trim(); // optional
 
-    // Prepare prompt
+    // Build AI prompt
     const prompt = `
 Write a detailed and engaging blog post based on the following information:
 
 Title: ${title}
 Category: ${category}
 
-Content Ideas / Keywords: ${content}
+Content Ideas / Keywords: ${context}
 
 - Make the blog informative and well-structured.
 - Use proper headings and paragraphs.
@@ -41,7 +34,6 @@ Content Ideas / Keywords: ${content}
 - Include examples or tips if relevant.
 `;
 
-    // Generate AI blog
     const response = await GenerateByAi(prompt);
 
     if (!response) {
@@ -51,7 +43,6 @@ Content Ideas / Keywords: ${content}
       );
     }
 
-    // Success response
     return NextResponse.json({
       success: true,
       message: 'AI blog generated successfully',
@@ -59,7 +50,6 @@ Content Ideas / Keywords: ${content}
     });
 
   } catch (error) {
-    // Catch any unexpected errors
     return NextResponse.json(
       { success: false, message: error.message || 'Something went wrong' },
       { status: 500 }

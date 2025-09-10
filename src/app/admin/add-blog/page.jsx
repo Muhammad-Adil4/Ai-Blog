@@ -25,7 +25,6 @@ const AddBlogPage = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    // cleanup preview URL on unmount or when preview changes
     return () => {
       if (preview) URL.revokeObjectURL(preview);
     };
@@ -33,7 +32,7 @@ const AddBlogPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return; // prevent double submit
+    if (submitting) return;
 
     if (!title || !content || !category || !image) {
       toast.error("Please fill all fields and upload an image");
@@ -49,12 +48,10 @@ const AddBlogPage = () => {
       formdata.append("content", content);
       formdata.append("category", category);
 
-      // If you're using axios wrapper (createBlog), it should NOT set Content-Type manually.
       const response = await createBlog(formdata);
 
       if (response.success) {
         toast.success(response.message || "Blog created");
-        // reset form
         setTitle("");
         setCategory("");
         setContent("");
@@ -74,8 +71,6 @@ const AddBlogPage = () => {
     const file = e.target.files[0];
     if (!file) return;
     setImage(file);
-
-    // revoke old preview then set new
     if (preview) URL.revokeObjectURL(preview);
     setPreview(URL.createObjectURL(file));
   };
@@ -205,9 +200,7 @@ const AddBlogPage = () => {
                 <span className="font-medium">Creating blog…</span>
               </>
             ) : (
-              <>
-                <span className="font-medium">Add Blog</span>
-              </>
+              <span className="font-medium">Add Blog</span>
             )}
           </button>
         </form>
@@ -221,9 +214,7 @@ const AddBlogPage = () => {
         </h2>
 
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">
-            Blog Title
-          </label>
+          <label className="block text-gray-700 mb-1 font-medium">Blog Title</label>
           <input
             type="text"
             placeholder="Enter a blog title for AI..."
@@ -235,9 +226,7 @@ const AddBlogPage = () => {
         </div>
 
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">
-            Category
-          </label>
+          <label className="block text-gray-700 mb-1 font-medium">Category</label>
           <select
             value={aiCategory}
             onChange={(e) => setAiCategory(e.target.value)}
@@ -246,19 +235,16 @@ const AddBlogPage = () => {
           >
             <option value="">Select category...</option>
             {BlogCategories.map((cat, i) => (
-              <option key={i} value={cat}>
-                {cat}
-              </option>
+              <option key={i} value={cat}>{cat}</option>
             ))}
           </select>
         </div>
 
+        {/* ===== AI Content Input ===== */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">
-            AI Context
-          </label>
+          <label className="block text-gray-700 mb-1 font-medium">AI Content / Context</label>
           <textarea
-            placeholder="Enter context for AI to generate content..."
+            placeholder="Enter content ideas or keywords for AI..."
             value={aiContent}
             onChange={(e) => setAiContent(e.target.value)}
             disabled={loadingAi || submitting}
@@ -287,10 +273,6 @@ const AddBlogPage = () => {
             </>
           )}
         </button>
-
-        <div className="text-xs text-gray-500 mt-1 min-h-[1rem]" aria-live="polite">
-          {loadingAi ? "This may take several seconds — please wait." : "Tip: provide a short context to steer the AI."}
-        </div>
 
         {content && (
           <div className="mt-4">
